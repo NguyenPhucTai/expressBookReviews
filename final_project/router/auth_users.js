@@ -28,6 +28,8 @@ regd_users.post("/login", (req,res) => {
 
   const token = jwt.sign({username : username}, 'tai_phuc_key', { expiresIn: '1h' });
 
+  req.session.username = username;
+
   return res.status(200).json({
     message: "Login successful",
     token: token,
@@ -36,8 +38,26 @@ regd_users.post("/login", (req,res) => {
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  const { isbn } = req.params;
+  const { review } = req.query;
+  const username = req.session.username;
+
+  if(!username){
+    return res.status(401).json({ message: "You must be logged in to add or modify a review." });
+  }
+
+  if (!review || review.trim() === "") {
+    return res.status(400).json({ message: "Review cannot be empty." });
+  }
+
+  const book = books[isbn];
+  if (!book) {
+    return res.status(404).json({ message: `Book with ISBN ${isbn} not found.` });
+  }
+
+  book.reviews = book.reviews || {};
+  book.reviews[username] = review;
+  res.status(200).json({ message: "Review added/updated successfully." });
 });
 
 module.exports.authenticated = regd_users;

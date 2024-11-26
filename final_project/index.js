@@ -11,7 +11,19 @@ app.use(express.json());
 app.use("/customer",session({secret:"fingerprint_customer",resave: true, saveUninitialized: true}))
 
 app.use("/customer/auth/*", function auth(req,res,next){
-//Write the authenication mechanism here
+    const token = req.headers['authorization']?.split(' ')[1];
+
+    if(!token){
+        return res.status(401).json({ message: "Authentication required" });
+    }
+
+    jwt.verify(token, 'tai_phuc_key', (err, decoded) => {
+        if(err){
+            return res.status(403).json({ message: "Invalid or expired token" });
+        }
+        req.username = decoded.username; 
+        next();
+    });
 });
  
 const PORT =5000;
